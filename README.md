@@ -3,9 +3,7 @@
 ## Project setup
 ```
 npm install
-npm install axios
 ```
-Execute Backend and change the URL to the one used by the Backend in "main.js"
 
 ### Compiles and hot-reloads for development
 ```

@@ -33,7 +33,6 @@
 <script setup>
 import { reactive } from "vue";
 import { useRouter } from "vue-router";
-import axios from 'axios'; // Importa Axios
 
 const router = useRouter();
 
@@ -45,33 +44,13 @@ const producto = reactive({
   descripcion: ""
 });
 
-const registrarProducto = async () => { // Cambia a async
+const registrarProducto = () => {
   if (producto.nombre && producto.cantidad && producto.unidad && producto.precio && producto.descripcion) {
-    try {
-      // El ProducerId se obtiene del token JWT en el backend, no es necesario enviarlo desde aquí
-      const response = await axios.post('/Products', { // Llama al endpoint de registro de producto
-        name: producto.nombre,
-        description: producto.descripcion,
-        quantityValue: producto.cantidad,
-        quantityUnit: producto.unidad,
-        priceValue: producto.precio,
-        priceCurrency: 'PEN' // Asume una moneda por defecto, puedes hacerla configurable si es necesario
-      });
-
-      // Usa el ID del producto devuelto por el backend en el mensaje de alerta
-      alert(`Producto ${producto.nombre} registrado exitosamente con ID: ${response.data}.`);
-      router.push("/dashboard");
-
-      // Opcional: resetear el formulario después de un registro exitoso
-      producto.nombre = "";
-      producto.cantidad = 0;
-      producto.unidad = "";
-      producto.precio = 0.0;
-      producto.descripcion = "";
-    } catch (error) {
-      console.error('Error al registrar producto:', error.response?.data || error.message);
-      alert(error.response?.data?.message || 'Error al registrar el producto. Por favor, complete todos los campos correctamente.');
-    }
+    const productos = JSON.parse(sessionStorage.getItem("productos")) || [];
+    productos.push({ ...producto });
+    sessionStorage.setItem("productos", JSON.stringify(productos));
+    alert(`Producto ${producto.nombre} registrado exitosamente.`);
+    router.push("/dashboard");
   } else {
     alert("Por favor, complete todos los campos.");
   }

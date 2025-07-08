@@ -7,29 +7,23 @@
         <h1>GreenLogist</h1>
       </div>
     </header>
-    <!-- CONTENIDO DE ESTADISTICAS -->
+        <!-- CONTENIDO DE ESTADISTICAS -->
     <main class="stats-container">
       <h2 class="stats-title">Estadísticas</h2>
 
       <div class="stats-grid">
         <div class="stat-card">
           <h3>Ventas Totales</h3>
-          <p>{{ statistics.totalSalesCount }} ventas</p>
-          <p class="highlight">Total ganado: S/. {{ statistics.totalSalesAmount.toFixed(2) }}</p>
+          <p>52 ventas</p>
+          <p class="highlight">Total ganado: S/. 4,320.00</p>
         </div>
         <div class="stat-card">
           <h3>Productos Vendidos</h3>
-          <p>{{ statistics.totalProductsSoldKg.toFixed(2) }} kg en productos</p>
+          <p>1,200 kg en productos</p>
         </div>
         <div class="stat-card">
           <h3>Transportes Solicitados</h3>
-          <p>{{ statistics.totalTransportRequests }} pedidos</p>
-          <p>Completados: {{ statistics.completedTransportRequests }}</p>
-        </div>
-        <div class="stat-card">
-          <h3>Impacto Ambiental</h3>
-          <p>CO2 Reducido: {{ statistics.totalEnvironmentalImpact.toFixed(2) }} kg</p>
-          <p class="highlight">¡Tu contribución es clave!</p>
+          <p>38 pedidos</p>
         </div>
       </div>
 
@@ -46,35 +40,9 @@
 </template>
 
 <script>
-import axios from 'axios'; // Importa Axios
-
 export default {
   name: 'EstadisticasView',
-  data() {
-    return {
-      statistics: { // Inicializa con valores por defecto
-        totalSalesCount: 0,
-        totalSalesAmount: 0.00,
-        totalProductsSoldKg: 0.00,
-        totalTransportRequests: 0,
-        completedTransportRequests: 0,
-        totalEnvironmentalImpact: 0.00,
-      }
-    };
-  },
-  async created() { // Carga las estadísticas al crear el componente
-    await this.fetchStatistics();
-  },
   methods: {
-    async fetchStatistics() {
-      try {
-        const response = await axios.get('/Statistics/detailed-statistics'); // Llama al endpoint de estadísticas detalladas
-        this.statistics = response.data;
-      } catch (error) {
-        console.error('Error al cargar estadísticas:', error.response?.data || error.message);
-        // Puedes mostrar un mensaje de error al usuario
-      }
-    },
     goBack() {
       this.$router.push('/dashboard');
     }

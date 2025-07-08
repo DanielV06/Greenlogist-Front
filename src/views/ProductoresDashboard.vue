@@ -32,18 +32,17 @@
           <div class="stats-grid">
             <div class="stat-card green">
               <p>Productos Registrados</p>
-              <h2>{{ dashboardSummary.registeredProductsCount }}</h2>
+              <h2>24</h2>
             </div>
             <div class="stat-card blue">
               <p>Transportes Solicitados</p>
-              <h2>{{ dashboardSummary.requestedTransportsCount }}</h2>
+              <h2>5</h2>
             </div>
             <div class="stat-card orange">
-              <p>Órdenes Completadas</p>
-              <h2>{{ dashboardSummary.completedOrdersCount }}</h2>
+              <p>Estadísticas</p>
+              <h2>+12%</h2>
             </div>
           </div>
-          <!-- Puedes añadir más detalles del summary aquí si lo deseas -->
         </section>
       </main>
     </div>
@@ -55,60 +54,32 @@
 </template>
 
 <script>
-import axios from 'axios'; // Importa Axios
-import { onActivated } from 'vue'; // Importa onActivated
-
 export default {
   data() {
     return {
-      isLoggingOut: false,
-      dashboardSummary: { // Inicializa con valores por defecto
-        registeredProductsCount: 0,
-        requestedTransportsCount: 0,
-        completedOrdersCount: 0,
-        totalSalesAmount: 0,
-        totalProductsSoldKg: 0,
-        environmentalImpactMetric: 0,
-      }
+      isLoggingOut: false
     }
   },
-  setup() { // Usa setup para Composition API hooks
-    // onActivated se ejecuta cada vez que el componente es activado (ej. al volver a él)
-    onActivated(async () => {
-      await this.fetchDashboardSummary();
-    });
-    // Puedes mantener created para la carga inicial si lo prefieres,
-    // o simplemente confiar en onActivated si el componente siempre se activa.
-    // Para este caso, lo mantendremos en methods y lo llamaremos desde onActivated.
-  },
-  async created() { // También carga al inicio cuando el componente es creado por primera vez
-    await this.fetchDashboardSummary();
-  },
   methods: {
-    async fetchDashboardSummary() {
-      try {
-        const response = await axios.get('/Statistics/dashboard-summary'); // Llama al endpoint de resumen
-        this.dashboardSummary = response.data;
-      } catch (error) {
-        console.error('Error al cargar el resumen del dashboard:', error.response?.data || error.message);
-        // Puedes mostrar un mensaje de error al usuario si lo deseas
-      }
-    },
     async handleLogout() {
       this.isLoggingOut = true;
 
       try {
+
         localStorage.removeItem('authToken');
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('currentUserEmail');
+        localStorage.removeItem('userData');
+        localStorage.removeItem('currentUser'); 
+
 
         await new Promise(resolve => setTimeout(resolve, 500));
+
 
         this.$router.push({ name: 'Login' });
 
       } catch (error) {
-        console.error('Error durante logout (limpieza local):', error);
-        this.$router.push({ name: 'Login' });
+        console.error('Error durante logout:', error);
+
+        window.location.href = '/login';
       } finally {
         this.isLoggingOut = false;
       }

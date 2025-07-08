@@ -7,7 +7,7 @@
         <h1>GreenLogist</h1>
       </div>
     </header>
-
+    
     <main class="profile-main-content">
       <div class="profile-card">
         <div class="avatar-section">
@@ -34,7 +34,7 @@
           <span class="profile-badge">
             <i class="fas fa-certificate"></i> Productor Certificado
           </span>
-
+          
           <button
               @click="triggerFileInput"
               class="change-image-btn"
@@ -99,7 +99,7 @@
             </div>
           </div>
 
-
+     
           <div class="action-buttons">
             <template v-if="!editing">
               <button @click="startEditing" class="edit-btn">
@@ -122,7 +122,7 @@
         </div>
       </div>
     </main>
-
+    
     <footer class="profile-footer full-width-footer">
       <div class="footer-content">
         <p>&copy; 2025 GreenLogist — Todos los derechos reservados</p>
@@ -132,60 +132,45 @@
 </template>
 
 <script>
-import axios from 'axios'; // Importa Axios
-
 export default {
   name: 'ProducerProfile',
   data() {
     return {
       editing: false,
-      profileImage: null, // Esta será la URL de la imagen si se sube a un servicio de almacenamiento
+      profileImage: null,
       producer: {
-        id: '', // Añadimos el ID del productor
         name: '',
         email: '',
-        description: '',
-        password: '' // Campo para la nueva contraseña
+        description: 'Productor agrícola',
+        password: ''
       },
-      originalData: {} // Para restaurar si se cancela la edición
+      originalData: {}
     };
   },
-  async created() {
-    await this.loadUserData();
+  created() {
+    this.loadUserData();
   },
   methods: {
-    async loadUserData() {
-      try {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (!currentUser || !currentUser.userId) {
-          alert('No hay usuario autenticado. Redirigiendo al login.');
-          this.$router.push('/login');
-          return;
-        }
+    loadUserData() {
+      const users = JSON.parse(localStorage.getItem('users')) || [];
+      const currentUserEmail = localStorage.getItem('currentUserEmail');
+      const currentUser = users.find(u => u.email === currentUserEmail);
 
-        // El backend obtiene el ID del usuario del token, no necesitamos pasarlo explícitamente aquí
-        const response = await axios.get('/Producers/profile');
-        const profileData = response.data;
-
+      if (currentUser) {
         this.producer = {
-          id: profileData.id,
-          name: profileData.fullName || 'Nombre no definido',
-          email: profileData.email || '',
-          description: profileData.description || 'Productor agrícola',
-          password: '' // La contraseña nunca se carga, solo se envía si se cambia
+          name: currentUser.fullName || 'Nombre no definido',
+          email: currentUser.email || '',
+          description: currentUser.description || 'Productor agrícola',
+          password: ''
         };
-        this.profileImage = profileData.profileImageUrl;
-
-        // Guarda una copia de los datos originales para la función de cancelar
         this.originalData = {
           ...this.producer,
-          profileImage: this.profileImage
+          profileImage: currentUser.profileImage
         };
 
-      } catch (error) {
-        console.error('Error al cargar datos del perfil:', error.response?.data || error.message);
-        alert('Error al cargar el perfil. Por favor, inténtalo de nuevo.');
-        // Opcional: redirigir al dashboard o login si el error es grave (ej. 401/403)
+        if (currentUser.profileImage) {
+          this.profileImage = currentUser.profileImage;
+        }
       }
     },
     startEditing() {
@@ -196,11 +181,6 @@ export default {
         this.$refs.fileInput.click();
       }
     },
-    // NOTA: La subida de imágenes a un backend real es más compleja.
-    // Esto es una simulación de cómo obtendrías la URL de la imagen.
-    // En una aplicación real, enviarías el archivo al backend,
-    // el backend lo guardaría en un almacenamiento de objetos (S3, Azure Blob, etc.)
-    // y te devolvería la URL para guardarla en la base de datos del perfil.
     handleImageUpload(event) {
       const file = event.target.files[0];
       if (file) {
@@ -208,26 +188,36 @@ export default {
         const maxSize = 2 * 1024 * 1024; // 2MB
 
         if (!validTypes.includes(file.type)) {
-          alert('Formato de imagen no válido. Use JPEG, PNG o GIF');
+          this.$notify?.({
+            type: 'error',
+            title: 'Error',
+            text: 'Formato de imagen no válido. Use JPEG, PNG o GIF'
+          });
           return;
         }
 
         if (file.size > maxSize) {
-          alert('La imagen es demasiado grande (máximo 2MB)');
+          this.$notify?.({
+            type: 'error',
+            title: 'Error',
+            text: 'La imagen es demasiado grande (máximo 2MB)'
+          });
           return;
         }
 
-        // Simulación: Convertir a Base64 para mostrarla temporalmente.
-        // En un escenario real, aquí harías una llamada API para subir la imagen.
         const reader = new FileReader();
         reader.onload = (e) => {
-          this.profileImage = e.target.result; // Esto sería la URL real devuelta por el backend
-          alert('Imagen de perfil seleccionada. Guarde los cambios para confirmarla.');
+          this.profileImage = e.target.result;
+          this.$notify?.({
+            type: 'success',
+            title: 'Éxito',
+            text: 'Imagen de perfil actualizada'
+          });
         };
-        reader.readAsDataURL(file); // Para mostrarla en el frontend
+        reader.readAsDataURL(file);
       }
     },
-    async saveChanges() {
+    saveChanges() {
       try {
         if (!this.producer.name.trim()) {
           throw new Error('El nombre es obligatorio');
@@ -238,47 +228,53 @@ export default {
           throw new Error('Ingrese un correo electrónico válido');
         }
 
-        // Prepara los datos para enviar al backend
-        const updateData = {
-          fullName: this.producer.name,
-          description: this.producer.description,
-          profileImageUrl: this.profileImage // Asegúrate de que esto sea una URL si el backend lo espera
-        };
 
-        if (this.producer.password) {
-          updateData.newPassword = this.producer.password;
-        }
+        const users = JSON.parse(localStorage.getItem('users')) || [];
+        const userIndex = users.findIndex(u => u.email === this.originalData.email);
 
-        // Llama al endpoint de actualización de perfil
-        await axios.put('/Producers/profile', updateData);
+        if (userIndex !== -1) {
+          const updatedUser = {
+            ...users[userIndex],
+            fullName: this.producer.name,
+            email: this.producer.email,
+            description: this.producer.description,
 
-        // Actualiza los datos originales y el estado de edición solo si la llamada API fue exitosa
-        this.originalData = {
-          ...this.producer,
-          profileImage: this.profileImage
-        };
-        this.editing = false;
-        alert('Perfil actualizado correctamente');
+            profileImage: this.profileImage || users[userIndex].profileImage
+          };
 
-        // Opcional: Si el email cambió, actualiza el currentUserEmail en localStorage
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (currentUser && currentUser.email !== this.producer.email) {
-          currentUser.email = this.producer.email;
-          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+          if (this.producer.password) {
+            updatedUser.password = this.producer.password;
+          }
+
+          users[userIndex] = updatedUser;
+          localStorage.setItem('users', JSON.stringify(users));
           localStorage.setItem('currentUserEmail', this.producer.email);
-        }
-        if (currentUser && currentUser.fullName !== this.producer.name) {
-          currentUser.fullName = this.producer.name;
-          localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        }
 
+
+          this.originalData = {
+            ...this.producer,
+            profileImage: this.profileImage
+          };
+
+          this.editing = false;
+
+          this.$notify?.({
+            type: 'success',
+            title: 'Éxito',
+            text: 'Perfil actualizado correctamente'
+          });
+        }
       } catch (error) {
-        console.error('Error al actualizar el perfil:', error.response?.data || error.message);
-        alert(error.response?.data?.message || error.message || 'Error al actualizar el perfil');
+        this.$notify?.({
+          type: 'error',
+          title: 'Error',
+          text: error.message || 'Error al actualizar el perfil'
+        });
       }
     },
     cancelEditing() {
-      // Restaura los datos originales y sale del modo de edición
+
       this.producer = { ...this.originalData };
       this.profileImage = this.originalData.profileImage;
       this.editing = false;

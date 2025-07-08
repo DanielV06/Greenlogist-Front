@@ -7,6 +7,13 @@
       </div>
     </header>
 
+
+    <section class="request-header">
+      <h2>Solicitud de Transporte</h2>
+      <p>Complete el formulario para solicitar el transporte de sus productos</p>
+    </section>
+
+
     <main class="request-content">
       <form class="transport-form" @submit.prevent="submitTransportRequest">
         <div class="form-group">
@@ -69,71 +76,34 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'; // Importa onMounted
-import axios from 'axios'; // Importa Axios
+import { ref } from 'vue'
 
-const products = ref([]); // Ahora se cargará desde el backend
+const products = ref([
+  { id: 1, name: 'Manzanas', quantity: 100, unit: 'kg' },
+  { id: 2, name: 'Naranjas', quantity: 150, unit: 'kg' },
+  { id: 3, name: 'Lechugas', quantity: 50, unit: 'unidades' },
+])
 
 const emptyTransportData = () => ({
   productId: '',
   quantity: 1,
-  origin: '', // En un sistema real, esto podría ser un objeto de ubicación
-  destination: '', // En un sistema real, esto podría ser un objeto de ubicación
+  origin: '',
+  destination: '',
   requiredDate: '',
   specialInstructions: ''
-});
+})
 
-const transportData = ref(emptyTransportData());
+const transportData = ref(emptyTransportData())
 
-// Función para cargar los productos del productor
-const fetchProductsForTransport = async () => {
-  try {
-    const response = await axios.get('/Products/for-transport');
-    products.value = response.data;
-  } catch (error) {
-    console.error('Error al cargar productos para transporte:', error.response?.data || error.message);
-    alert('Error al cargar productos disponibles. Por favor, inténtalo de nuevo.');
-  }
-};
-
-// Carga los productos cuando el componente se monta
-onMounted(fetchProductsForTransport);
-
-const submitTransportRequest = async () => { // Cambia a async
-  try {
-    // En un sistema real, Origin y Destination serían objetos más complejos.
-    // Aquí, asumimos que el backend puede parsear la dirección y quizás inferir ciudad/país.
-    // Si el backend espera ciudad y país, deberías añadir campos en el formulario.
-    // Para este ejemplo, estoy pasando 'Lima' y 'Peru' como valores fijos.
-    const requestPayload = {
-      productId: transportData.value.productId,
-      quantityValue: transportData.value.quantity,
-      quantityUnit: products.value.find(p => p.id === transportData.value.productId)?.unit || '', // Obtener la unidad del producto seleccionado
-      originAddress: transportData.value.origin,
-      originCity: 'Lima', // Asume una ciudad y país por defecto o añade campos al formulario
-      originCountry: 'Peru',
-      destinationAddress: transportData.value.destination,
-      destinationCity: 'Lima', // Asume una ciudad y país por defecto o añade campos al formulario
-      destinationCountry: 'Peru',
-      requiredDate: transportData.value.requiredDate,
-      specialInstructions: transportData.value.specialInstructions
-    };
-
-    const response = await axios.post('/Shipping', requestPayload); // Llama al endpoint de solicitud de transporte
-
-    alert('Solicitud de transporte enviada con éxito. ID: ' + response.data);
-    transportData.value = emptyTransportData(); // Limpia el formulario
-    await fetchProductsForTransport(); // Recarga los productos por si la cantidad disponible cambió
-
-  } catch (error) {
-    console.error('Error al enviar solicitud de transporte:', error.response?.data || error.message);
-    alert(error.response?.data?.message || 'Error al enviar solicitud de transporte. Por favor, verifica los datos.');
-  }
-};
+const submitTransportRequest = () => {
+  console.log('Solicitud enviada:', transportData.value)
+  alert('Solicitud de transporte enviada con éxito')
+  transportData.value = emptyTransportData()
+}
 
 const goBack = () => {
-  window.history.back();
-};
+  window.history.back()
+}
 </script>
 
 <style scoped>

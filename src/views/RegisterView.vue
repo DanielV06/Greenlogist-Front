@@ -30,7 +30,6 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios'; // Importa Axios
 
 const fullName = ref('');
 const email = ref('');
@@ -40,10 +39,10 @@ const errorMessage = ref('');
 
 const router = useRouter();
 
-const handleRegister = async () => { // Cambia a async
+const handleRegister = () => {
   errorMessage.value = ''; // Reset error message
 
-  // Validaciones básicas (pueden ser más robustas en el backend)
+  // Validaciones básicas
   if (!fullName.value || !email.value || !password.value || !confirmPassword.value) {
     errorMessage.value = 'Todos los campos son obligatorios.';
     return;
@@ -52,30 +51,31 @@ const handleRegister = async () => { // Cambia a async
     errorMessage.value = 'Las contraseñas no coinciden.';
     return;
   }
+  // Validación de email 
   if (!/\S+@\S+\.\S+/.test(email.value)) {
     errorMessage.value = 'El formato del correo electrónico no es válido.';
     return;
   }
 
-  try {
-    // Para el registro, asumimos que siempre es un 'Producer' por ahora,
-    // ya que este es el flujo del productor. Si tuvieras un selector, lo usarías aquí.
-    const role = 'Producer';
+  // Simulación de base de datos con localStorage
+  let users = JSON.parse(localStorage.getItem('users')) || [];
 
-    const response = await axios.post('/Auth/register', { // Llama al endpoint de registro
-      fullName: fullName.value,
-      email: email.value,
-      password: password.value,
-      role: role // Envía el rol al backend
-    });
-
-    // Usa el ID de usuario devuelto por el backend en el mensaje de alerta
-    alert(`¡Registro exitoso! Tu ID de usuario es: ${response.data}. Ahora puedes iniciar sesión.`);
-    router.push('/login'); // Redirigir a la página de inicio de sesión
-  } catch (error) {
-    console.error('Error al registrar:', error.response?.data || error.message);
-    errorMessage.value = error.response?.data?.message || 'Error al registrar. Inténtalo de nuevo.';
+  if (users.find(user => user.email === email.value)) {
+    errorMessage.value = 'Este correo electrónico ya está registrado.';
+    return;
   }
+  
+  // Para esta simulación, la guardamos tal cual para el login.
+  users.push({
+    fullName: fullName.value,
+    email: email.value,
+    password: password.value, // SIMULACIÓN
+  });
+
+  localStorage.setItem('users', JSON.stringify(users));
+
+  alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
+  router.push('/login'); // Redirigir a la página de inicio de sesión
 };
 </script>
 
